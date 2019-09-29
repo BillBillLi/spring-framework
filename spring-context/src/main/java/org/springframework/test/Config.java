@@ -16,17 +16,15 @@
 
 package org.springframework.test;
 
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * 
- * @author admin
+ * @author bill.b.li
  */
-public class MainTest {
-	public static void main(String[] args) {
-		AnnotationConfigApplicationContext acac = new AnnotationConfigApplicationContext(Config.class);
-		Person aPerson = acac.getBean(Person.class);
-		System.out.println(aPerson.getClass().getName());
-	}
+@Configuration
+@ComponentScan("org.springframework.test")
+public class Config {
 
 }

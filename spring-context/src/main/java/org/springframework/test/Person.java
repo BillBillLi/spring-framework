@@ -16,17 +16,46 @@
 
 package org.springframework.test;
 
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.stereotype.Component;
 
 /**
  * 
- * @author admin
+ * @author bill.b.li
  */
-public class MainTest {
-	public static void main(String[] args) {
-		AnnotationConfigApplicationContext acac = new AnnotationConfigApplicationContext(Config.class);
-		Person aPerson = acac.getBean(Person.class);
-		System.out.println(aPerson.getClass().getName());
+@Component
+public class Person {
+	private String nameString;
+	private int age;
+	
+	/**
+	 * @return the nameString
+	 */
+	public String getNameString() {
+		return nameString;
 	}
-
+	
+	/**
+	 * @param nameString the nameString to set
+	 */
+	public void setNameString(String nameString) {
+		this.nameString = nameString;
+	}
+	
+	/**
+	 * @return the age
+	 */
+	public int getAge() {
+		return age;
+	}
+	
+	/**
+	 * @param age the age to set
+	 */
+	public void setAge(int age) {
+		this.age = age;
+	}
+	
+	
+	
+	
 }
