@@ -118,6 +118,7 @@ public class AnnotatedBeanDefinitionReader {
 	}
 
 	public void register(Class<?>... annotatedClasses) {
+		// 按照各个配置去读取bean
 		for (Class<?> annotatedClass : annotatedClasses) {
 			registerBean(annotatedClass);
 		}
@@ -136,14 +137,23 @@ public class AnnotatedBeanDefinitionReader {
 	public void registerBean(Class<?> annotatedClass, String name,
 			@SuppressWarnings("unchecked") Class<? extends Annotation>... qualifiers) {
 
-		//到这一步，annotatedClass还只是我们的{Config.class}
+		// 将Bean配置类信息转成容器中AnnotatedGenericBeanDefinition数据结构, AnnotatedGenericBeanDefinition
+		// 继承自BeanDefinition作用是定义一个bean的数据结构，下面的getMetadata可以获取到该bean上的注解信息
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(annotatedClass);
+		
+		//@Conditional装配条件判断是否需要跳过注册
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
 		}
 
+		//@param instanceSupplier a callback for creating an instance of the bean
+		
+		//解析bean作用域(单例或者原型)，如果有@Scope注解，则解析@Scope，没有则默认为singleton
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
+		
+		//作用域写回BeanDefinition数据结构, abd中缺损的情况下为空，将默认值singleton重新赋值到abd
 		abd.setScope(scopeMetadata.getScopeName());
+		//生成bean配置类beanName
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
 		if (qualifiers != null) {
