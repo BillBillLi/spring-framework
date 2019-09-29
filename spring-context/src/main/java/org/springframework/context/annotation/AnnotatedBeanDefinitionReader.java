@@ -136,6 +136,7 @@ public class AnnotatedBeanDefinitionReader {
 	public void registerBean(Class<?> annotatedClass, String name,
 			@SuppressWarnings("unchecked") Class<? extends Annotation>... qualifiers) {
 
+		//到这一步，annotatedClass还只是我们的{Config.class}
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(annotatedClass);
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
