@@ -33,6 +33,7 @@ spring-*/src/main/java/META-INF/MANIFEST.MF
 *.ipr
 *.iws
 .idea
+.class
 out
 test-output
 atlassian-ide-plugin.xml
