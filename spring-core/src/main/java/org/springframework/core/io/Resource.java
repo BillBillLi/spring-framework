@@ -78,6 +78,8 @@ public interface Resource extends InputStreamSource {
 	 * @throws IOException if the resource cannot be resolved as URL,
 	 * i.e. if the resource is not available as descriptor
 	 */
+	// URL是uniform resource locator
+	// 统一资源标识符，用来唯一的标识一个资源。Web上可用的每种资源如HTML文档、图像、视频片段、程序等都是一个来URI来定位的
 	URL getURL() throws IOException;
 
 	/**
@@ -85,6 +87,7 @@ public interface Resource extends InputStreamSource {
 	 * @throws IOException if the resource cannot be resolved as URI,
 	 * i.e. if the resource is not available as descriptor
 	 */
+	// URI，是uniform resource identifier
 	URI getURI() throws IOException;
 
 	/**
