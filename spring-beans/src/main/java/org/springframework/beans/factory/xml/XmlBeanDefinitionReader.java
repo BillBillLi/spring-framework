@@ -317,15 +317,19 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 			logger.info("Loading XML bean definitions from " + encodedResource.getResource());
 		}
 
+		// 主要是import的循环引用的检查
 		Set<EncodedResource> currentResources = this.resourcesCurrentlyBeingLoaded.get();
 		if (currentResources == null) {
 			currentResources = new HashSet<EncodedResource>(4);
 			this.resourcesCurrentlyBeingLoaded.set(currentResources);
 		}
+		// 如果相互引用了就报异常了
 		if (!currentResources.add(encodedResource)) {
 			throw new BeanDefinitionStoreException(
 					"Detected cyclic loading of " + encodedResource + " - check your import definitions!");
 		}
+		
+		// 这里的核心其实就是把Resource转化成了InputSource，然后交给真正的doLoadBeanDefinitions去做。
 		try {
 			InputStream inputStream = encodedResource.getResource().getInputStream();
 			try {

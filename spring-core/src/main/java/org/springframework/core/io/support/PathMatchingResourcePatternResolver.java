@@ -193,22 +193,11 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 
 	private PathMatcher pathMatcher = new AntPathMatcher();
 
-
-	/**
-	 * Create a new PathMatchingResourcePatternResolver with a DefaultResourceLoader.
-	 * <p>ClassLoader access will happen via the thread context class loader.
-	 * @see org.springframework.core.io.DefaultResourceLoader
-	 */
+	
 	public PathMatchingResourcePatternResolver() {
 		this.resourceLoader = new DefaultResourceLoader();
 	}
 
-	/**
-	 * Create a new PathMatchingResourcePatternResolver.
-	 * <p>ClassLoader access will happen via the thread context class loader.
-	 * @param resourceLoader the ResourceLoader to load root directories and
-	 * actual resources with
-	 */
 	public PathMatchingResourcePatternResolver(ResourceLoader resourceLoader) {
 		Assert.notNull(resourceLoader, "ResourceLoader must not be null");
 		this.resourceLoader = resourceLoader;
@@ -226,12 +215,12 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	}
 
 
-	/**
-	 * Return the ResourceLoader that this pattern resolver works with.
-	 */
+
 	public ResourceLoader getResourceLoader() {
 		return this.resourceLoader;
 	}
+	
+	
 
 	@Override
 	public ClassLoader getClassLoader() {

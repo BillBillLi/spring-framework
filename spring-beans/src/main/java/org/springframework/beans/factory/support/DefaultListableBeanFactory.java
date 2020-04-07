@@ -735,6 +735,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		synchronized (this.beanDefinitionMap) {
 			oldBeanDefinition = this.beanDefinitionMap.get(beanName);
+			// 在允许或者不允许bean 覆盖的情况下会有不同的结果
 			if (oldBeanDefinition != null) {
 				if (!this.allowBeanDefinitionOverriding) {
 					throw new BeanDefinitionStoreException(beanDefinition.getResourceDescription(), beanName,
