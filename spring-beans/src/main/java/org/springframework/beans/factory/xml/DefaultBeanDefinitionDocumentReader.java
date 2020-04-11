@@ -99,6 +99,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	public void registerBeanDefinitions(Document doc, XmlReaderContext readerContext) {
 		this.readerContext = readerContext;
 		logger.debug("Loading bean definitions");
+		// 就是拿个个root节点然后交给真正的doRegisterBeanDefinitions去解析而已
+		// spring源码中还有很多类似风格的代码，doXXX才是真正干活的地方。。。
 		Element root = doc.getDocumentElement();
 		doRegisterBeanDefinitions(root);
 	}
@@ -128,6 +130,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 */
 	protected void doRegisterBeanDefinitions(Element root) {
 		String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
+		// if代码块是处理profile相关的（忽略）
 		if (StringUtils.hasText(profileSpec)) {
 			String[] specifiedProfiles = StringUtils.tokenizeToStringArray(
 					profileSpec, BeanDefinitionParserDelegate.MULTI_VALUE_ATTRIBUTE_DELIMITERS);
@@ -142,10 +145,12 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		// the new (child) delegate with a reference to the parent for fallback purposes,
 		// then ultimately reset this.delegate back to its original (parent) reference.
 		// this behavior emulates a stack of delegates without actually necessitating one.
+		// 由于beans标签里面可以嵌套beans标签，递归调用时候root不一样，所以需要创建一个新的delegate
 		BeanDefinitionParserDelegate parent = this.delegate;
 		this.delegate = createDelegate(this.readerContext, root, parent);
 
 		preProcessXml(root);
+		// 从root节点开始解析
 		parseBeanDefinitions(root, this.delegate);
 		postProcessXml(root);
 
@@ -173,9 +178,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 				if (node instanceof Element) {
 					Element ele = (Element) node;
 					if (delegate.isDefaultNamespace(ele)) {
+						// 解析默认标签
 						parseDefaultElement(ele, delegate);
 					}
 					else {
+						// 解析自定义标签（稍后会讲自定义标签）
 						delegate.parseCustomElement(ele);
 					}
 				}
@@ -192,15 +199,19 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * @param delegate
 	 */
 	private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate delegate) {
+		// 解析import标签
 		if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
 			importBeanDefinitionResource(ele);
 		}
+		// 解析alias标签
 		else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
 			processAliasRegistration(ele);
 		}
+		// 解析bean标签
 		else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
 			processBeanDefinition(ele, delegate);
 		}
+		// 解析beans标签，其实就是递归了。。。
 		else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
 			// recurse
 			doRegisterBeanDefinitions(ele);
@@ -212,30 +223,32 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * from the given resource into the bean factory.
 	 */
 	protected void importBeanDefinitionResource(Element ele) {
+		// 拿到location属性值并且校验是否为空(新版本属性名已经变成resource)
 		String location = ele.getAttribute(RESOURCE_ATTRIBUTE);
 		if (!StringUtils.hasText(location)) {
 			getReaderContext().error("Resource location must not be empty", ele);
 			return;
 		}
-
-		// Resolve system properties: e.g. "${user.dir}"
+		// 如果location里带了诸如（"${user.dir}"）这类的东西的话需要先解析这个
 		location = getEnvironment().resolveRequiredPlaceholders(location);
-
+		
 		Set<Resource> actualResources = new LinkedHashSet<Resource>(4);
 
-		// Discover whether the location is an absolute or relative URI
+		// 判断 location 是相对路径还是绝对路径
 		boolean absoluteLocation = false;
 		try {
+			// 这里面的逻辑其实就是看location是不是以classpath*:或者classpath:开头或者是不是url或者根据uri的scheme来判断
 			absoluteLocation = ResourcePatternUtils.isUrl(location) || ResourceUtils.toURI(location).isAbsolute();
 		}
 		catch (URISyntaxException ex) {
-			// cannot convert to an URI, considering the location relative
-			// unless it is the well-known Spring prefix "classpath*:"
+			
 		}
 
-		// Absolute or relative?
+		// 如果是绝对路径，则直接使用xmlBeanDefinitionReader中的loadBeanDefinitions加载解析Resource
+		// 如果不是绝对路径，那么计算相对路径，然后再用xmlBeanDefinitionReader中的loadBeanDefinitions来加载解析Resource
 		if (absoluteLocation) {
 			try {
+				// 注意这里的 getReaderContext().getReader()返回的其实就是之前的xmlBeanDefinitionReader对象
 				int importCount = getReaderContext().getReader().loadBeanDefinitions(location, actualResources);
 				if (logger.isDebugEnabled()) {
 					logger.debug("Imported " + importCount + " bean definitions from URL location [" + location + "]");
@@ -272,6 +285,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						ele, ex);
 			}
 		}
+		// 解析成功后，进行监听器激活处理,但其实这个版本的这里，P事都没干，因为最终调用的方法是个空实现，所以这里不用管
 		Resource[] actResArray = actualResources.toArray(new Resource[actualResources.size()]);
 		getReaderContext().fireImportProcessed(location, actResArray, extractSource(ele));
 	}
@@ -280,8 +294,10 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * Process the given alias element, registering the alias with the registry.
 	 */
 	protected void processAliasRegistration(Element ele) {
+		// 拿到alias标签中的alias属性和name属性
 		String name = ele.getAttribute(NAME_ATTRIBUTE);
 		String alias = ele.getAttribute(ALIAS_ATTRIBUTE);
+		// 校验name和alias属性,如果哪个是空的，就会在error方法中抛出异常
 		boolean valid = true;
 		if (!StringUtils.hasText(name)) {
 			getReaderContext().error("Name must not be empty", ele);
@@ -291,6 +307,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			getReaderContext().error("Alias must not be empty", ele);
 			valid = false;
 		}
+		// 如果有效则注册别名
 		if (valid) {
 			try {
 				getReaderContext().getRegistry().registerAlias(name, alias);

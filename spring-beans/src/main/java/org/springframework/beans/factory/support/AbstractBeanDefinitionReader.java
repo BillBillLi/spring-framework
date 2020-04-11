@@ -181,6 +181,16 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 		}
 		return counter;
 	}
+	
+	@Override
+	public int loadBeanDefinitions(String... locations) throws BeanDefinitionStoreException {
+		Assert.notNull(locations, "Location array must not be null");
+		int counter = 0;
+		for (String location : locations) {
+			counter += loadBeanDefinitions(location);
+		}
+		return counter;
+	}
 
 	@Override
 	public int loadBeanDefinitions(String location) throws BeanDefinitionStoreException {
@@ -208,9 +218,9 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 			throw new BeanDefinitionStoreException(
 					"Cannot import bean definitions from location [" + location + "]: no ResourceLoader available");
 		}
-
+		// 这个if else非常简单，大体意思就是如果本类的resourceLoader属性是个ResourcePatternResolver实例，那么就去用ResourcePatternResolver
+		// 批量加载资源然后解析资源，否则就用普通的esourceLoader来加载单个资源
 		if (resourceLoader instanceof ResourcePatternResolver) {
-			// Resource pattern matching available.
 			try {
 				Resource[] resources = ((ResourcePatternResolver) resourceLoader).getResources(location);
 				int loadCount = loadBeanDefinitions(resources);
@@ -228,9 +238,7 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 				throw new BeanDefinitionStoreException(
 						"Could not resolve bean definition resource pattern [" + location + "]", ex);
 			}
-		}
-		else {
-			// Can only load single resources by absolute URL.
+		} else {
 			Resource resource = resourceLoader.getResource(location);
 			int loadCount = loadBeanDefinitions(resource);
 			if (actualResources != null) {
@@ -241,16 +249,6 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 			}
 			return loadCount;
 		}
-	}
-
-	@Override
-	public int loadBeanDefinitions(String... locations) throws BeanDefinitionStoreException {
-		Assert.notNull(locations, "Location array must not be null");
-		int counter = 0;
-		for (String location : locations) {
-			counter += loadBeanDefinitions(location);
-		}
-		return counter;
 	}
 
 }

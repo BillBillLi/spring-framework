@@ -5,9 +5,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd">
     <!--    一个灰常简单的xml  -->
-    <bean id="aTest" class="com.example.demo.resource.entity.ATest" name="aTest">
+    <bean id="aPerson" class="org.springframework.test.Person" name="aPerson">
     </bean>
 
-    <bean id="bTest" class="com.example.demo.resource.entity.BTest" name="bTest">
-    </bean>
 </beans>

@@ -114,8 +114,6 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 	private NamespaceHandlerResolver namespaceHandlerResolver;
 
-	private DocumentLoader documentLoader = new DefaultDocumentLoader();
-
 	private EntityResolver entityResolver;
 
 	private ErrorHandler errorHandler = new SimpleSaxErrorHandler(logger);
@@ -316,20 +314,21 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 		if (logger.isInfoEnabled()) {
 			logger.info("Loading XML bean definitions from " + encodedResource.getResource());
 		}
-
-		// 主要是import的循环引用的检查
+		
+		// 1.主要是import标签的循环引用的检查,可以理解成检查一个xml和另外一个xml是否通过import标签相互引用
 		Set<EncodedResource> currentResources = this.resourcesCurrentlyBeingLoaded.get();
 		if (currentResources == null) {
 			currentResources = new HashSet<EncodedResource>(4);
 			this.resourcesCurrentlyBeingLoaded.set(currentResources);
 		}
-		// 如果相互引用了就报异常了
+		// 2.如果相互引用了就报异常了
+		// 1和2没看懂可以直接看3，后边再回过头看很容易就会明白了
 		if (!currentResources.add(encodedResource)) {
 			throw new BeanDefinitionStoreException(
 					"Detected cyclic loading of " + encodedResource + " - check your import definitions!");
 		}
 		
-		// 这里的核心其实就是把Resource转化成了InputSource，然后交给真正的doLoadBeanDefinitions去做。
+		// 3.这里的核心其实就是把Resource转化成了InputSource，然后交给真正的doLoadBeanDefinitions去做。
 		try {
 			InputStream inputStream = encodedResource.getResource().getInputStream();
 			try {
@@ -392,7 +391,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	protected int doLoadBeanDefinitions(InputSource inputSource, Resource resource)
 			throws BeanDefinitionStoreException {
 		try {
+			// 获取Document对象（Document代表一个html或是一个xml），其实到了这步，spring才知道你的Resource是个xml
 			Document doc = doLoadDocument(inputSource, resource);
+			// 解析xml注册BeanDefinitions
 			return registerBeanDefinitions(doc, resource);
 		}
 		catch (BeanDefinitionStoreException ex) {
@@ -429,6 +430,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see #setDocumentLoader
 	 * @see DocumentLoader#loadDocument
 	 */
+	
+	private DocumentLoader documentLoader = new DefaultDocumentLoader();
+	
 	protected Document doLoadDocument(InputSource inputSource, Resource resource) throws Exception {
 		return this.documentLoader.loadDocument(inputSource, getEntityResolver(), this.errorHandler,
 				getValidationModeForResource(resource), isNamespaceAware());
@@ -443,17 +447,21 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * mode, even when something other than {@link #VALIDATION_AUTO} was set.
 	 */
 	protected int getValidationModeForResource(Resource resource) {
+		// 拿到已经设置好的验证模式，在ClassPathXmlApplicationoContext的情况下，这个值
+		// 是1，如果用第二篇开始的代码去debug，validationModeToUse的值是1
 		int validationModeToUse = getValidationMode();
+		// VALIDATION_AUTO的值是1，因此不走这个if
+		//（VALIDATION_AUTO代表的是由spring来发现应该去用什么样的校验资源的方式）
 		if (validationModeToUse != VALIDATION_AUTO) {
 			return validationModeToUse;
 		}
+		// 通过代码去验证，用第二篇文章开始的debug后detectedMode的返回值是3
+		// 如果我们用的是个DTD格式的文件，那么这里将会返回2
 		int detectedMode = detectValidationMode(resource);
 		if (detectedMode != VALIDATION_AUTO) {
 			return detectedMode;
 		}
-		// Hmm, we didn't get a clear indication... Let's assume XSD,
-		// since apparently no DTD declaration has been found up until
-		// detection stopped (before finding the document's root tag).
+		// 返回XSD校验模式，其实也是3
 		return VALIDATION_XSD;
 	}
 
@@ -508,10 +516,15 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	@SuppressWarnings("deprecation")
 	public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
+		// 用反射创建DefaultBeanDefinitionDocumentReader实例对象
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
+		// 设置环境
 		documentReader.setEnvironment(getEnvironment());
+		// 拿到已经注册的BeanDefinition的数量
 		int countBefore = getRegistry().getBeanDefinitionCount();
+		// 真正注册BeanDefinition，即正儿八经解析xml的过程
 		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
+		// 返回注册的BeanDefinition的数量
 		return getRegistry().getBeanDefinitionCount() - countBefore;
 	}
 

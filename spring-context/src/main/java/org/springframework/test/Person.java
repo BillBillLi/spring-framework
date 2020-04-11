@@ -55,6 +55,11 @@ public class Person {
 		this.age = age;
 	}
 	
+	public void doSomething() {
+		System.out.println(1);
+		
+	}
+	
 	
 	
 	
