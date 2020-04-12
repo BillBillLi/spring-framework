@@ -80,9 +80,20 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	 * @throws BeansException if context creation failed
 	 */
 	public ClassPathXmlApplicationContext(String configLocation) throws BeansException {
+		// 调用的是下边的这个方法
 		this(new String[] {configLocation}, true, null);
 	}
+	
+	public ClassPathXmlApplicationContext(String[] configLocations, boolean refresh, ApplicationContext parent)
+			throws BeansException {
 
+		super(parent);
+		// 解析配置，此时参数是[classpath*:application-context.xml]
+		setConfigLocations(configLocations);
+		if (refresh) {
+			refresh();
+		}
+	}
 	/**
 	 * Create a new ClassPathXmlApplicationContext, loading the definitions
 	 * from the given XML files and automatically refreshing the context.
@@ -104,7 +115,7 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	public ClassPathXmlApplicationContext(String[] configLocations, ApplicationContext parent) throws BeansException {
 		this(configLocations, true, parent);
 	}
-
+	
 	/**
 	 * Create a new ClassPathXmlApplicationContext, loading the definitions
 	 * from the given XML files.
@@ -117,27 +128,6 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	 */
 	public ClassPathXmlApplicationContext(String[] configLocations, boolean refresh) throws BeansException {
 		this(configLocations, refresh, null);
-	}
-
-	/**
-	 * Create a new ClassPathXmlApplicationContext with the given parent,
-	 * loading the definitions from the given XML files.
-	 * @param configLocations array of resource locations
-	 * @param refresh whether to automatically refresh the context,
-	 * loading all bean definitions and creating all singletons.
-	 * Alternatively, call refresh manually after further configuring the context.
-	 * @param parent the parent context
-	 * @throws BeansException if context creation failed
-	 * @see #refresh()
-	 */
-	public ClassPathXmlApplicationContext(String[] configLocations, boolean refresh, ApplicationContext parent)
-			throws BeansException {
-
-		super(parent);
-		setConfigLocations(configLocations);
-		if (refresh) {
-			refresh();
-		}
 	}
 
 

@@ -449,7 +449,7 @@ public class BeanDefinitionParserDelegate {
 	 */
 	// 开始解析<bean>标签
 	public BeanDefinitionHolder parseBeanDefinitionElement(Element ele, BeanDefinition containingBean) {
-		// 拿到bean标签的id和name属性
+		// 1.拿到bean标签的id和name属性
 		String id = ele.getAttribute(ID_ATTRIBUTE);
 		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
 
@@ -459,7 +459,7 @@ public class BeanDefinitionParserDelegate {
 			aliases.addAll(Arrays.asList(nameArr));
 		}
 
-		// 如果没有id属性，则用name属性中的第一个来作为bean在容器中的名字
+		// 2.如果没有id属性，则用name属性中的第一个来作为bean在容器中的名字
 		String beanName = id;
 		if (!StringUtils.hasText(beanName) && !aliases.isEmpty()) {
 			beanName = aliases.remove(0);
@@ -468,14 +468,15 @@ public class BeanDefinitionParserDelegate {
 						"' as bean name and " + aliases + " as aliases");
 			}
 		}
-
+		// 3.检查bean名字是否唯一 
 		if (containingBean == null) {
 			checkNameUniqueness(beanName, aliases, ele);
 		}
 
-		// 到这里解析成正儿八经的beanDefinition
+		// 4.到这里解析成正儿八经的beanDefinition
 		AbstractBeanDefinition beanDefinition = parseBeanDefinitionElement(ele, beanName, containingBean);
 		if (beanDefinition != null) {
+			// 如果到这里beanName还为空或者是空字符串就按规则生成beanName（非重点）
 			if (!StringUtils.hasText(beanName)) {
 				try {
 					if (containingBean != null) {
@@ -484,9 +485,6 @@ public class BeanDefinitionParserDelegate {
 					}
 					else {
 						beanName = this.readerContext.generateBeanName(beanDefinition);
-						// Register an alias for the plain bean class name, if still possible,
-						// if the generator returned the class name plus a suffix.
-						// This is expected for Spring 1.2/2.0 backwards compatibility.
 						String beanClassName = beanDefinition.getBeanClassName();
 						if (beanClassName != null &&
 								beanName.startsWith(beanClassName) && beanName.length() > beanClassName.length() &&
@@ -539,32 +537,34 @@ public class BeanDefinitionParserDelegate {
 	// 正儿八经解析bean标签，参数containingBean是null
 	public AbstractBeanDefinition parseBeanDefinitionElement(
 			Element ele, String beanName, BeanDefinition containingBean) {
-
 		this.parseState.push(new BeanEntry(beanName));
-
+		// 1.拿到bean的类名全路径
 		String className = null;
 		if (ele.hasAttribute(CLASS_ATTRIBUTE)) {
 			className = ele.getAttribute(CLASS_ATTRIBUTE).trim();
 		}
 
 		try {
+			// 2.拿parent bean的id
 			String parent = null;
 			if (ele.hasAttribute(PARENT_ATTRIBUTE)) {
 				parent = ele.getAttribute(PARENT_ATTRIBUTE);
 			}
-			// 到目前为止，找到了parent和class的全路径
+			// 3.到目前为止，找到了parent和class的全路径
 			// 这里的bd只有class以及parentName和
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
-			// 在给bd set 标签中各种属性
+			// 4.在给bd set 标签中各种属性
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
 
 			parseMetaElements(ele, bd);
-			// lookup-method和replace-method
+			// 5.lookup-method和replace-method，
+			// lookup-method对应的是注解@lookup，这个在搭业务框架的时候很有用，大家感兴趣可以百度下
 			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
 
+			// 6.处理constructor-arg 、property、qualifier 三个标签
 			parseConstructorArgElements(ele, bd);
 			parsePropertyElements(ele, bd);
 			parseQualifierElements(ele, bd);
@@ -600,23 +600,20 @@ public class BeanDefinitionParserDelegate {
 	public AbstractBeanDefinition parseBeanDefinitionAttributes(Element ele, String beanName,
 			BeanDefinition containingBean, AbstractBeanDefinition bd) {
 
-		// scope
+		// scope属性
 		if (ele.hasAttribute(SINGLETON_ATTRIBUTE)) {
 			this.readerContext.warning("Old 1.x 'singleton' attribute in use - upgrade to 'scope' declaration", ele);
-		}
-		else if (ele.hasAttribute(SCOPE_ATTRIBUTE)) {
+		}else if (ele.hasAttribute(SCOPE_ATTRIBUTE)) {
 			bd.setScope(ele.getAttribute(SCOPE_ATTRIBUTE));
-		}
-		else if (containingBean != null) {
-			// Take default from containing bean in case of an inner bean definition.
+		}else if (containingBean != null) {
 			bd.setScope(containingBean.getScope());
 		}
-
+		
 		// abstract 属性
 		if (ele.hasAttribute(ABSTRACT_ATTRIBUTE)) {
 			bd.setAbstract(TRUE_VALUE.equals(ele.getAttribute(ABSTRACT_ATTRIBUTE)));
 		}
-
+		
 		// lazy-init属性
 		String lazyInit = ele.getAttribute(LAZY_INIT_ATTRIBUTE);
 		if (DEFAULT_VALUE.equals(lazyInit)) {
