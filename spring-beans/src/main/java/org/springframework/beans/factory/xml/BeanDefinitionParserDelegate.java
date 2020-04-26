@@ -1429,14 +1429,20 @@ public class BeanDefinitionParserDelegate {
 		}
 		return TRUE_VALUE.equals(value);
 	}
-
+	
+	// 先调的这个方法
 	public BeanDefinition parseCustomElement(Element ele) {
 		return parseCustomElement(ele, null);
 	}
 
+	//再调的这个
 	public BeanDefinition parseCustomElement(Element ele, BeanDefinition containingBd) {
+		// 1.获取我们定义的namespace
 		String namespaceUri = getNamespaceURI(ele);
+		// 2。根据 namespaceUri 获取相应的 Handler
+		// readerContext 其实就是XmlReadContext的实例
 		NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
+		// 3.如果handler是null就报异常
 		if (handler == null) {
 			error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);
 			return null;

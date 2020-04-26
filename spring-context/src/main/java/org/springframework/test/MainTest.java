@@ -26,9 +26,9 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
  */
 public class MainTest {
 	public static void main(String[] args) {
-		ApplicationContext acac = new AnnotationConfigApplicationContext(Config.class);
-		Person aPerson = acac.getBean(Person.class);
-		System.out.println(aPerson.getClass().getName());
+//		ApplicationContext acac = new AnnotationConfigApplicationContext(Config.class);
+//		Person aPerson = acac.getBean(Person.class);
+//		System.out.println(aPerson.getClass().getName());
 		
 		ApplicationContext applicationContext =
                 new ClassPathXmlApplicationContext("classpath*:application-context.xml");

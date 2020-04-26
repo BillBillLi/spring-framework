@@ -111,14 +111,19 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 	 */
 	@Override
 	public NamespaceHandler resolve(String namespaceUri) {
+		// 获取到所有已经配置好的handlerMapping的映射
 		Map<String, Object> handlerMappings = getHandlerMappings();
+		// 根据nameSpace获取到对应的handler，用上面的Test代码debug的话，发现其实就是我们自己定义的Handler的
+		// 全路径，也就是Spring.Handler里面配的
 		Object handlerOrClassName = handlerMappings.get(namespaceUri);
 		if (handlerOrClassName == null) {
 			return null;
 		}
+		// 这个else if就是看之前有没有使用过这个handler，如果有，就直接返回了
 		else if (handlerOrClassName instanceof NamespaceHandler) {
 			return (NamespaceHandler) handlerOrClassName;
 		}
+		// 没有的话，做初始化这个handler的工作
 		else {
 			String className = (String) handlerOrClassName;
 			try {
@@ -127,8 +132,11 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 					throw new FatalBeanException("Class [" + className + "] for namespace [" + namespaceUri +
 							"] does not implement the [" + NamespaceHandler.class.getName() + "] interface");
 				}
+				// 反射创建实例
 				NamespaceHandler namespaceHandler = (NamespaceHandler) BeanUtils.instantiateClass(handlerClass);
+				// 初始化，记不记得我们自己定义的NameSpaceHandler的init方法？
 				namespaceHandler.init();
+				// 放到缓存中
 				handlerMappings.put(namespaceUri, namespaceHandler);
 				return namespaceHandler;
 			}

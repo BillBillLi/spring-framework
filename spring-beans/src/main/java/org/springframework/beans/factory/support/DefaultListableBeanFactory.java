@@ -717,15 +717,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	@Override
 	public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
 			throws BeanDefinitionStoreException {
-
 		Assert.hasText(beanName, "Bean name must not be empty");
 		Assert.notNull(beanDefinition, "BeanDefinition must not be null");
 
 		if (beanDefinition instanceof AbstractBeanDefinition) {
 			try {
+				// 1.校验，主要是校验method-override 和 factory-method（这两个不能共存）
 				((AbstractBeanDefinition) beanDefinition).validate();
-			}
-			catch (BeanDefinitionValidationException ex) {
+			}catch (BeanDefinitionValidationException ex) {
 				throw new BeanDefinitionStoreException(beanDefinition.getResourceDescription(), beanName,
 						"Validation of bean definition failed", ex);
 			}
@@ -733,34 +732,35 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		BeanDefinition oldBeanDefinition;
 
+		// 为什么要synchronized，因为其实ConcurrentHashMap并非绝对的线程安全
 		synchronized (this.beanDefinitionMap) {
 			oldBeanDefinition = this.beanDefinitionMap.get(beanName);
-			// 在允许或者不允许bean 覆盖的情况下会有不同的结果
 			if (oldBeanDefinition != null) {
+				// 2.allowBeanDefinitionOverriding默认是true
 				if (!this.allowBeanDefinitionOverriding) {
 					throw new BeanDefinitionStoreException(beanDefinition.getResourceDescription(), beanName,
 							"Cannot register bean definition [" + beanDefinition + "] for bean '" + beanName +
 							"': There is already [" + oldBeanDefinition + "] bound.");
-				}
-				else if (oldBeanDefinition.getRole() < beanDefinition.getRole()) {
+				// 3. role 表示beanDefiniton的种类，是个int类型的变量，你可以理解成这个数字越大其代表的beanDefinition就越底层
+				// 例如 1是用户定义的，2和3就都是配置相关的，只是级别不一样
+				} else if (oldBeanDefinition.getRole() < beanDefinition.getRole()) {
 					// e.g. was ROLE_APPLICATION, now overriding with ROLE_SUPPORT or ROLE_INFRASTRUCTURE
 					if (this.logger.isWarnEnabled()) {
 						this.logger.warn("Overriding user-defined bean definition for bean '" + beanName +
 								" with a framework-generated bean definition ': replacing [" +
 								oldBeanDefinition + "] with [" + beanDefinition + "]");
 					}
-				}
-				else {
+				} else {
 					if (this.logger.isInfoEnabled()) {
 						this.logger.info("Overriding bean definition for bean '" + beanName +
 								"': replacing [" + oldBeanDefinition + "] with [" + beanDefinition + "]");
 					}
 				}
-			}
-			else {
+			} else {
 				this.beanDefinitionNames.add(beanName);
 				this.frozenBeanDefinitionNames = null;
 			}
+			// 4. 真真正正的注册
 			this.beanDefinitionMap.put(beanName, beanDefinition);
 		}
 

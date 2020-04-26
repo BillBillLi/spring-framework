@@ -7,5 +7,6 @@
     <!--    一个灰常简单的xml  -->
     <bean id="aPerson" class="org.springframework.test.Person" name="aPerson">
     </bean>
+    
 
 </beans>

@@ -219,7 +219,7 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 					"Cannot import bean definitions from location [" + location + "]: no ResourceLoader available");
 		}
 		// 这个if else非常简单，大体意思就是如果本类的resourceLoader属性是个ResourcePatternResolver实例，那么就去用ResourcePatternResolver
-		// 批量加载资源然后解析资源，否则就用普通的esourceLoader来加载单个资源
+		// 批量加载资源然后解析资源，否则就用普通的ResourceLoader来加载单个资源
 		if (resourceLoader instanceof ResourcePatternResolver) {
 			try {
 				Resource[] resources = ((ResourcePatternResolver) resourceLoader).getResources(location);

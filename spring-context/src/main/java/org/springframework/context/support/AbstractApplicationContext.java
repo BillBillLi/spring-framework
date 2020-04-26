@@ -451,48 +451,43 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			prepareRefresh();
 			// 2.获取一个全新的beanFactory实例
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
-
 			// 3.初始化beanFactory，给它设置各种
 			prepareBeanFactory(beanFactory);
-
 			try {
-				// Allows post-processing of the bean factory in context subclasses.
+				// 4.（空方法，让子类重写的）允许对beanFactory中的东西做一些前置的修改，可以是增加个BeanFactoryPostProcessors
+				// 这种的，也可以给增加个BeanDefinition，也可以增加一些让beanFactory在自动装配时候忽略掉的接口，也可以增加一些特定场景使用的bean，
+				// 比如有的后代就增加了新的scope bean 等等。但是重点是，我刚才说的这些都是基于一种具体场景的，因此这个抽象类里，
+				// 这个方法是空的(不弄成抽象的原因是不强迫子类去实现)
 				postProcessBeanFactory(beanFactory);
 
-				// Invoke factory processors registered as beans in the context.
+				// 5.触发调用所有的BeanFactoryPostProcessors（后边会讲这是个啥）
 				invokeBeanFactoryPostProcessors(beanFactory);
 
-				// Register bean processors that intercept bean creation.
+				// 6.注册所有的BeanPostProcessor（后边会说这个）
 				registerBeanPostProcessors(beanFactory);
 
-				// Initialize message source for this context.
+				// 7.初始化支持国际化的东东
 				initMessageSource();
 
-				// Initialize event multicaster for this context.
+				// 8. 初始化事件广播器
 				initApplicationEventMulticaster();
 
-				// Initialize other special beans in specific context subclasses.
+				// 9. 初始化其他特殊的bean
 				onRefresh();
 
-				// Check for listener beans and register them.
+				// 10. 注册监听器
 				registerListeners();
 
-				// Instantiate all remaining (non-lazy-init) singletons.
+				// 11. 实例化bean（ BOSS难度代码 ）
 				finishBeanFactoryInitialization(beanFactory);
 
-				// Last step: publish corresponding event.
 				finishRefresh();
-			}
-
-			catch (BeansException ex) {
+			} catch (BeansException ex) {
 				logger.warn("Exception encountered during context initialization - cancelling refresh attempt", ex);
-
 				// Destroy already created singletons to avoid dangling resources.
 				destroyBeans();
-
 				// Reset 'active' flag.
 				cancelRefresh(ex);
-
 				// Propagate exception to caller.
 				throw ex;
 			}
@@ -504,8 +499,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * active flag as well as performing any initialization of property sources.
 	 */
 	protected void prepareRefresh() {
+		// 1. 记录下容器开始刷新的时间
 		this.startupDate = System.currentTimeMillis();
-
+		// 2. 把容器标为激活状态
 		synchronized (this.activeMonitor) {
 			this.active = true;
 		}
@@ -514,19 +510,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			logger.info("Refreshing " + this);
 		}
 
-		// Initialize any placeholder property sources in the context environment
+		// 3. ClassPathXmlApplicationContext的时候调的是个空方法～
 		initPropertySources();
 
-		// Validate that all properties marked as required are resolvable
-		// see ConfigurablePropertyResolver#setRequiredProperties
+		// 4. 调用StandardEnvironment中的validateRequiredProperties方法
 		getEnvironment().validateRequiredProperties();
 	}
-
-	/**
-	 * <p>Replace any stub property sources with actual instances.
-	 * @see org.springframework.core.env.PropertySource.StubPropertySource
-	 * @see org.springframework.web.context.support.WebApplicationContextUtils#initServletPropertySources
-	 */
+	// 上面3 处调的方法
 	protected void initPropertySources() {
 		// For subclasses: do nothing by default.
 	}
