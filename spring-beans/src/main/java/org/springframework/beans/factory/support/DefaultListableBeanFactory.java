@@ -65,6 +65,11 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import com.sun.org.apache.bcel.internal.generic.NEW;
+
+import jdk.nashorn.internal.parser.JSONParser;
+import jdk.nashorn.internal.runtime.JSONFunctions;
+
 /**
  * Default implementation of the
  * {@link org.springframework.beans.factory.ListableBeanFactory} and
@@ -294,8 +299,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 		if (beanNames.length == 1) {
 			return getBean(beanNames[0], requiredType);
-		}
-		else if (beanNames.length > 1) {
+		} else if (beanNames.length > 1) {
 			T primaryBean = null;
 			for (String beanName : beanNames) {
 				T beanInstance = getBean(beanName, requiredType);
@@ -674,18 +678,26 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		List<String> beanNames;
 		synchronized (this.beanDefinitionMap) {
-			// Iterate over a copy to allow for init methods which in turn register new bean definitions.
-			// While this may not be part of the regular factory bootstrap, it does otherwise work fine.
+			// this.beanDefinitionNames,创建beanDefinitionNames的副本beanNames
+			// 用于后续的遍历，以允许init等方法注册新的bean定义
+			// this.beanDefinitionNames 中存储的是在注册BeanDefinition的时候存进来的bean名称
 			beanNames = new ArrayList<String>(this.beanDefinitionNames);
 		}
-
-		// Trigger initialization of all non-lazy singleton beans...
+		// 遍历，用bean名称初始化
 		for (String beanName : beanNames) {
+			// 获取beanName对应的RootBeanDefinition
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
+			
+			// 如果不是抽象并且是单例，并且不是懒加载，才会去进行初始化
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
+				// 1. 如果不是FactoryBean就直接初始化，是的话先拿到FactoryBean本身，再根据isEagerInit决定
+				// 是否调用getObject进行初始化
 				if (isFactoryBean(beanName)) {
 					final FactoryBean<?> factory = (FactoryBean<?>) getBean(FACTORY_BEAN_PREFIX + beanName);
 					boolean isEagerInit;
+					// 2.这个if else主要是用于判断是否需要先加载（饥饿加载）
+					// isEagerInit这个变量值其实就是SmartFactoryBean中isEagerInit()方法，只不过一个是直接获取，
+					// 另外一个是通过“特权”去执行
 					if (System.getSecurityManager() != null && factory instanceof SmartFactoryBean) {
 						isEagerInit = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
 							@Override
@@ -693,16 +705,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 								return ((SmartFactoryBean<?>) factory).isEagerInit();
 							}
 						}, getAccessControlContext());
-					}
-					else {
+					} else {
 						isEagerInit = (factory instanceof SmartFactoryBean &&
 								((SmartFactoryBean<?>) factory).isEagerInit());
 					}
+					
+					// 如果isEagerInit则实例化bean
 					if (isEagerInit) {
 						getBean(beanName);
 					}
-				}
-				else {
+				} else {
 					getBean(beanName);
 				}
 			}
@@ -853,11 +865,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		descriptor.initParameterNameDiscovery(getParameterNameDiscoverer());
 		if (descriptor.getDependencyType().equals(ObjectFactory.class)) {
 			return new DependencyObjectFactory(descriptor, beanName);
-		}
-		else if (descriptor.getDependencyType().equals(javaxInjectProviderClass)) {
+		}else if (descriptor.getDependencyType().equals(javaxInjectProviderClass)) {
 			return new DependencyProviderFactory().createDependencyProvider(descriptor, beanName);
-		}
-		else {
+		}else {
 			Object result = getAutowireCandidateResolver().getLazyResolutionProxyIfNecessary(descriptor, beanName);
 			if (result == null) {
 				result = doResolveDependency(descriptor, beanName, autowiredBeanNames, typeConverter);
@@ -903,8 +913,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				Arrays.sort((Object[]) result, this.dependencyComparator);
 			}
 			return result;
-		}
-		else if (Collection.class.isAssignableFrom(type) && type.isInterface()) {
+		}else if (Collection.class.isAssignableFrom(type) && type.isInterface()) {
 			Class<?> elementType = descriptor.getCollectionType();
 			if (elementType == null) {
 				if (descriptor.isRequired()) {
@@ -930,8 +939,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				Collections.sort((List<?>) result, this.dependencyComparator);
 			}
 			return result;
-		}
-		else if (Map.class.isAssignableFrom(type) && type.isInterface()) {
+		}else if (Map.class.isAssignableFrom(type) && type.isInterface()) {
 			Class<?> keyType = descriptor.getMapKeyType();
 			if (keyType == null || !String.class.isAssignableFrom(keyType)) {
 				if (descriptor.isRequired()) {
@@ -960,8 +968,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				autowiredBeanNames.addAll(matchingBeans.keySet());
 			}
 			return matchingBeans;
-		}
-		else {
+		}else {
 			Map<String, Object> matchingBeans = findAutowireCandidates(beanName, type, descriptor);
 			if (matchingBeans.isEmpty()) {
 				if (descriptor.isRequired()) {

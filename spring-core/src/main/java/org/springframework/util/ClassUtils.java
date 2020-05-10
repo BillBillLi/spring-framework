@@ -856,6 +856,7 @@ public abstract class ClassUtils {
 	 */
 	public static boolean isPrimitiveOrWrapper(Class<?> clazz) {
 		Assert.notNull(clazz, "Class must not be null");
+		// 判断是不是基本类型或者是基本类型的包装类
 		return (clazz.isPrimitive() || isPrimitiveWrapper(clazz));
 	}
 

@@ -8,5 +8,18 @@
     <bean id="aPerson" class="org.springframework.test.Person" name="aPerson">
     </bean>
     
+    
+    <alias name="aPerson" alias="aGirl"></alias>
+    
+    <bean id="pigHouse" class="org.springframework.test.PigHouse">
+        <property name="pigzhu">
+            <ref bean="pig"/>
+        </property>
+    </bean>
 
+    <bean id="pigFactory" class="org.springframework.test.PigFactory"/>
+    
+    <bean id="pig" factory-bean="pigFactory" factory-method="getInstance">
+    </bean>
+    
 </beans>

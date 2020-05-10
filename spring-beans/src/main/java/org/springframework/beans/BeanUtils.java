@@ -507,6 +507,7 @@ public abstract class BeanUtils {
 	 */
 	public static boolean isSimpleProperty(Class<?> clazz) {
 		Assert.notNull(clazz, "Class must not be null");
+		// 是简单类型 || （ 是数组 && 数组对应的类，比如new int[]{}.getComponentType() 返回的是int ）
 		return isSimpleValueType(clazz) || (clazz.isArray() && isSimpleValueType(clazz.getComponentType()));
 	}
 
@@ -518,6 +519,9 @@ public abstract class BeanUtils {
 	 * @return whether the given type represents a "simple" value type
 	 */
 	public static boolean isSimpleValueType(Class<?> clazz) {
+		// 是否为基本类型或者包装类 || 是否为枚举 || clazz是否为CharSequence的子类或就是个CharSequence
+		// （String就是个CharSequence） || 是不是个数字（这个很多，Integer，BigDecimal，原子类的都是）
+		// || 是不是Date或其子类 || 是不是URI || 是不是URL || 是不是Locale || 是不是Class
 		return ClassUtils.isPrimitiveOrWrapper(clazz) || clazz.isEnum() ||
 				CharSequence.class.isAssignableFrom(clazz) ||
 				Number.class.isAssignableFrom(clazz) ||

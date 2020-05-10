@@ -32,7 +32,7 @@ public class MainTest {
 		
 		ApplicationContext applicationContext =
                 new ClassPathXmlApplicationContext("classpath*:application-context.xml");
-        Person aTest = applicationContext.getBean(Person.class);
+        Person aTest = (Person)applicationContext.getBean("aPerson");
         aTest.doSomething();
 	}
 

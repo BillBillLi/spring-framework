@@ -274,18 +274,26 @@ public class ConstructorArgumentValues {
 	 * @return the ValueHolder for the argument, or {@code null} if none found
 	 */
 	public ValueHolder getGenericArgumentValue(Class<?> requiredType, String requiredName, Set<ValueHolder> usedValueHolders) {
+		// 每次循环的这个valueHolder其实可以理解成代表每个constructor-arg（不带index的那种）
 		for (ValueHolder valueHolder : this.genericArgumentValues) {
+			// usedValueHolders不为null并且包含当前valueHolder则跳过
+			// usedValueHolders 一般不为null
 			if (usedValueHolders != null && usedValueHolders.contains(valueHolder)) {
 				continue;
 			}
+			// valueHolder名称不为null && （需要的变量名是null || valueHolder的名称和需要的变量名不匹配）
+			// 则跳过
 			if (valueHolder.getName() != null &&
 					(requiredName == null || !valueHolder.getName().equals(requiredName))) {
 				continue;
 			}
+			// valueHolder的类型不为null && （需要的类型是null || 需要的类型是和当前valueHolder的类型不匹配）
 			if (valueHolder.getType() != null &&
 					(requiredType == null || !ClassUtils.matchesTypeName(requiredType, valueHolder.getType()))) {
 				continue;
 			}
+			// 需要的类型是null && 当前valueHolder的类型是null && 当前valueHolder的名称是null && 
+			// valueHolder的类型不是requiredType ，则跳过
 			if (requiredType != null && valueHolder.getType() == null && valueHolder.getName() == null &&
 					!ClassUtils.isAssignableValue(requiredType, valueHolder.getValue())) {
 				continue;

@@ -64,10 +64,12 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 				constructorToUse = (Constructor<?>) beanDefinition.resolvedConstructorOrFactoryMethod;
 				if (constructorToUse == null) {
 					final Class<?> clazz = beanDefinition.getBeanClass();
+					// 是个接口就报错
 					if (clazz.isInterface()) {
 						throw new BeanInstantiationException(clazz, "Specified class is an interface");
 					}
 					try {
+						// 拿构造方法
 						if (System.getSecurityManager() != null) {
 							constructorToUse = AccessController.doPrivileged(new PrivilegedExceptionAction<Constructor<?>>() {
 								@Override
@@ -86,9 +88,9 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 					}
 				}
 			}
+			// 在这里可以看出来用的是无参数的构造方法
 			return BeanUtils.instantiateClass(constructorToUse);
-		}
-		else {
+		}else {
 			// Must generate CGLIB subclass.
 			return instantiateWithMethodInjection(beanDefinition, beanName, owner);
 		}

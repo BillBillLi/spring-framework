@@ -551,7 +551,7 @@ public class BeanDefinitionParserDelegate {
 				parent = ele.getAttribute(PARENT_ATTRIBUTE);
 			}
 			// 3.到目前为止，找到了parent和class的全路径
-			// 这里的bd只有class以及parentName和
+			// 这里的bd只有class以及parentName
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
 			// 4.在给bd set 标签中各种属性
@@ -624,7 +624,7 @@ public class BeanDefinitionParserDelegate {
 		String autowire = ele.getAttribute(AUTOWIRE_ATTRIBUTE);
 		bd.setAutowireMode(getAutowireMode(autowire));
 		
-		// 这个属性从3.0已经过时，用构造器注入即可
+		// 这个dependency-check属性从3.0已经过时，用构造器注入即可
 		String dependencyCheck = ele.getAttribute(DEPENDENCY_CHECK_ATTRIBUTE);
 		bd.setDependencyCheck(getDependencyCheck(dependencyCheck));
 

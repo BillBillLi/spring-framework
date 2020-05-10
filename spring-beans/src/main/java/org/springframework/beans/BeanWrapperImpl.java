@@ -548,8 +548,7 @@ public class BeanWrapperImpl extends AbstractPropertyAccessor implements BeanWra
 			String nestedPath = propertyPath.substring(pos + 1);
 			BeanWrapperImpl nestedBw = getNestedBeanWrapper(nestedProperty);
 			return nestedBw.getBeanWrapperForPropertyPath(nestedPath);
-		}
-		else {
+		}else {
 			return this;
 		}
 	}
