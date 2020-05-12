@@ -303,12 +303,10 @@ public class MethodInvoker {
 					if (paramType.equals(superClass)) {
 						result = result + 2;
 						superClass = null;
-					}
-					else if (ClassUtils.isAssignable(paramType, superClass)) {
+					}else if (ClassUtils.isAssignable(paramType, superClass)) {
 						result = result + 2;
 						superClass = superClass.getSuperclass();
-					}
-					else {
+					}else {
 						superClass = null;
 					}
 				}
