@@ -189,8 +189,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		// 如果没成品并且正在创建中
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			synchronized (this.singletonObjects) {
-				// 从半成品的对象中尝试获取半成品
-				// 注意：半成品指的是那种提前曝光出来的对象，没有进行属性填充等操作
+				// 从提前曝光的对象中尝试获取
 				singletonObject = this.earlySingletonObjects.get(beanName);
 				// ***** 如果半成品也是null并且允许创建早期的单例引用，
 				if (singletonObject == null && allowEarlyReference) {
@@ -335,6 +334,8 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param beanName the name of the bean
 	 */
 	public boolean isSingletonCurrentlyInCreation(String beanName) {
+		// 这个是在AbstractBeanFactory中的doGetBean方法中调用getSingleton方法时候加到
+		// 这个map中的
 		return this.singletonsCurrentlyInCreation.contains(beanName);
 	}
 

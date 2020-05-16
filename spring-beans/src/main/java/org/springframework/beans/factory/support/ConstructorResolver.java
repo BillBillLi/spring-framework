@@ -114,27 +114,26 @@ class ConstructorResolver {
 			synchronized (mbd.constructorArgumentLock) {
 				// 先尝试从mbd的缓存拿解析过的构造方法和其对应的参数
 				// 注意哈，这块为什么会和之前那个根据工厂方法创建bean用的是一个mbd的变量做缓存的原因是：
-				// 同时只能使用构造方法和工厂方法中的一个去创建（不理解这里的可以多看几遍源码）
+				// 一个对象同时只能使用构造方法和工厂方法中的一个去创建（不理解这里的可以多看几遍源码）
 				constructorToUse = (Constructor<?>) mbd.resolvedConstructorOrFactoryMethod;
 				// 构造方法不为空 && 并且构造函数的参数解析过
-				// TODO 证明下这里的是不是只有当是第二次+ 加载的时候才会不为空
 				if (constructorToUse != null && mbd.constructorArgumentsResolved) {
 					// 缓存中拿已经解析出来的参数
 					argsToUse = mbd.resolvedConstructorArguments;
-					// 如果已经解析的为空，则去拿准备用来解析的
+					// 如果已经解析的为空，则去拿候选解析的
 					if (argsToUse == null) {
 						argsToResolve = mbd.preparedConstructorArguments;
 					}
 				}
 			}
-			// 如果argsToResolve不为null，把参数解析为正确的类型
+			// 如果argsToResolve不为null，把参数解析为正确的类型,上面已讲过这个方法
 			if (argsToResolve != null) {
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, constructorToUse, argsToResolve);
 			}
 		}
 
+		// 如果上面没有从缓存中拿到，则尝试去解析一个最合适的构造方法
 		if (constructorToUse == null) {
-			// Need to resolve the constructor.
 			boolean autowiring = (chosenCtors != null ||
 					mbd.getResolvedAutowireMode() == RootBeanDefinition.AUTOWIRE_CONSTRUCTOR);
 			ConstructorArgumentValues resolvedValues = null;
@@ -170,6 +169,7 @@ class ConstructorResolver {
 			
 			// 给构造方法排序，public排在非public之前，如果都是public，则参数多的排在前
 			AutowireUtils.sortConstructors(candidates);
+			// 这块权重的这个套路和之前的是一样的
 			int minTypeDiffWeight = Integer.MAX_VALUE;
 			Set<Constructor<?>> ambiguousConstructors = null;
 			List<Exception> causes = null;
@@ -191,9 +191,7 @@ class ConstructorResolver {
 				ArgumentsHolder argsHolder;
 				if (resolvedValues != null) {
 					try {
-						// 这块是去拿本下标构造方法参数的真正的名字，这个操作的原因是因为运行期间的class，你是不知道该class
-						// 的方法的参数的的名字的，只知道类型。这里面牵扯到一个@ConstructorProperties注解，具体用法感兴趣
-						// 可以自行百度下
+						// 这块是去拿本下标构造方法参数的真正的名字
 						String[] paramNames = ConstructorPropertiesChecker.evaluate(candidate, paramTypes.length);
 						if (paramNames == null) {
 							// 如果paramNames还是null则用参数名解析器来解析参数
@@ -202,7 +200,7 @@ class ConstructorResolver {
 								paramNames = pnd.getParameterNames(candidate);
 							}
 						}
-						// 去拿最终使用的构造方法的参数
+						// 去拿最终使用的构造方法的参数,之前讲工厂方法创建对象的时候已说过
 						argsHolder = createArgumentArray(
 								beanName, mbd, resolvedValues, bw, paramTypes, paramNames, candidate, autowiring);
 					}catch (UnsatisfiedDependencyException ex) {
@@ -236,6 +234,8 @@ class ConstructorResolver {
 					argsHolder = new ArgumentsHolder(explicitArgs);
 				}
 
+				// 权重，这里这个参数的意义和之前工厂方法创建对象的意义是一样的，
+				// 不明白的可以翻上去看看
 				int typeDiffWeight = (mbd.isLenientConstructorResolution() ?
 						argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
 				// 根据权重选出最合适的方法和参数，权重小则说明越合适
@@ -245,6 +245,7 @@ class ConstructorResolver {
 					argsToUse = argsHolder.arguments;
 					minTypeDiffWeight = typeDiffWeight;
 					ambiguousConstructors = null;
+				// 记录下来用作抛异常
 				}else if (constructorToUse != null && typeDiffWeight == minTypeDiffWeight) {
 					if (ambiguousConstructors == null) {
 						ambiguousConstructors = new LinkedHashSet<Constructor<?>>();
@@ -384,6 +385,7 @@ class ConstructorResolver {
 		String factoryBeanName = mbd.getFactoryBeanName();
 		if (factoryBeanName != null) {
 			// 如果factoryBeanName 和 目标bean的名称是一样的，则直接抛异常
+			// 这个是指factory-bean和id不能一样
 			if (factoryBeanName.equals(beanName)) {
 				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
 						"factory-bean reference points back to the same bean definition");
@@ -419,6 +421,7 @@ class ConstructorResolver {
 		if (explicitArgs != null) {
 			argsToUse = explicitArgs;
 		}else {
+		// 这个else 代码块主要是在拿已经解析并使用过的方法和方法参数的缓存
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
 				// 拿解析过的构造方法或是工厂方法
@@ -433,7 +436,7 @@ class ConstructorResolver {
 					}
 				}
 			}
-			// 解析要使用的参数为需要的类型
+			// 1. 解析要使用的参数为需要的类型
 			if (argsToResolve != null) {
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, factoryMethodToUse, argsToResolve);
 			}
@@ -447,7 +450,7 @@ class ConstructorResolver {
 			List<Method> candidateSet = new ArrayList<Method>();
 			for (Method candidate : rawCandidates) {
 				// 是静态方法 && 名字和mbd的工厂方法一样
-				// 因为即使是静态并且名字是同一个，也存在可能有个多个的情况
+				// 因为即使是静态并且名字是同一个，也存在可能有个多个重载的情况
 				// 所以需要存到candidateSet进行进一步的筛选
 				if (Modifier.isStatic(candidate.getModifiers()) == isStatic && mbd.isFactoryMethod(candidate)) {
 					candidateSet.add(candidate);
@@ -455,6 +458,7 @@ class ConstructorResolver {
 			}
 			// candidateSet转为数组并排序
 			Method[] candidates = candidateSet.toArray(new Method[candidateSet.size()]);
+			// 给方法排序，public排在非public之前，如果都是public，则参数多的排在前
 			AutowireUtils.sortFactoryMethods(candidates);
 
 			// 解析过的参数
@@ -473,7 +477,7 @@ class ConstructorResolver {
 				// 拿到beanDefinition中解析到的xml中定义的构造方法参数
 				ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
 				resolvedValues = new ConstructorArgumentValues();
-				// 解析参数，并返回参数个数（解析体现在需要把“1”这样的string转化为了int）
+				// 2.解析参数，并返回参数个数（解析体现在需要把“1”这样的string转化为了int）
 				minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
 			}
 
@@ -485,7 +489,7 @@ class ConstructorResolver {
 				// 拿到对应的方法作为候选方法和它的参数
 				Method candidate = candidates[i];
 				Class<?>[] paramTypes = candidate.getParameterTypes();
-				// 如果这个方法的参数大于最小需要的参数
+				// 如果这个方法的参数大于等于最小需要的参数
 				if (paramTypes.length >= minNrOfArgs) {
 					ArgumentsHolder argsHolder;
 
@@ -498,7 +502,7 @@ class ConstructorResolver {
 							if (pnd != null) {
 								paramNames = pnd.getParameterNames(candidate);
 							}
-							// 解析参数
+							// 3.解析参数
 							argsHolder = createArgumentArray(
 									beanName, mbd, resolvedValues, bw, paramTypes, paramNames, candidate, autowiring);
 						}catch (UnsatisfiedDependencyException ex) {
@@ -508,7 +512,7 @@ class ConstructorResolver {
 							}
 							// i为最后一个，&& argsHolderToUse为null （还没找到合适的参数）
 							if (i == candidates.length - 1 && argsHolderToUse == null) {
-								// 如果有异常，此时就抛异常
+								// 如果有异常，此时也就该抛异常了
 								if (causes != null) {
 									for (Exception cause : causes) {
 										this.beanFactory.onSuppressedException(cause);
@@ -532,9 +536,13 @@ class ConstructorResolver {
 					}
 
 					// 这个就是开始AbstractBeanDefinition中lenientConstructorResolution
-					// 那个属性影响到的地方，具体体现在：如果是true，
+					// 那个属性影响到的地方，具体体现在：如果是true，代表只要你的值转换过的类型可以和需要的类型
+					// 能匹配上，就是你这个方法了。比如说：getInstance（Integer age）,此时xml定义了age为18的参数，而由于xml中定义的参数都会被解析
+					// 成String，因此需要转化，如果lenientConstructorResolution为true，则这里就可以匹配上这个方法
+					// 因为18可以被转为Integer，如果是false，就不能匹配上这个方法了
 					int typeDiffWeight = (mbd.isLenientConstructorResolution() ?
 							argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
+					// 根据权重选出最合适的方法和参数，权重小则说明越合适
 					// minTypeDiffWeight的值此时是Integer.MAX_VALUE
 					if (typeDiffWeight < minTypeDiffWeight) {
 						factoryMethodToUse = candidate;
@@ -544,6 +552,8 @@ class ConstructorResolver {
 						ambiguousFactoryMethods = null;
 					// factoryMethodToUse不为null && 类型差异权重相同 && 不是宽松构造函数解析模式 && 候选方法的参数类型
 					// 和factoryMethodToUse的长度相同 && 候选方法数组和factoryMethodToUse的参数类型不一样
+					// 注意哈：typeDiffWeight 是不可能比 minTypeDiffWeight 大的，具体原因可以去计算typeDiffWeight
+					// 的方法里看
 					}else if (factoryMethodToUse != null && typeDiffWeight == minTypeDiffWeight &&
 							!mbd.isLenientConstructorResolution() &&
 							paramTypes.length == factoryMethodToUse.getParameterTypes().length &&
@@ -608,7 +618,7 @@ class ConstructorResolver {
 		// 到这块已经找到了要用的方法，以及要用的参数，可以去根据方法去创建对象了
 		try {
 			Object beanInstance;
-
+			// 应用特权创建或者是普通创建
 			if (System.getSecurityManager() != null) {
 				final Object fb = factoryBean;
 				final Method factoryMethod = factoryMethodToUse;
@@ -616,6 +626,7 @@ class ConstructorResolver {
 				beanInstance = AccessController.doPrivileged(new PrivilegedAction<Object>() {
 					@Override
 					public Object run() {
+						// 这里本质上还是在用反射调用
 						return beanFactory.getInstantiationStrategy().instantiate(
 								mbd, beanName, beanFactory, fb, factoryMethod, args);
 					}
@@ -727,6 +738,7 @@ class ConstructorResolver {
 			ConstructorArgumentValues.ValueHolder valueHolder =
 					resolvedValues.getArgumentValue(paramIndex, paramType, paramName, usedValueHolders);
 			// 如果没有找到需要的参数，并且不允许自动装配,则去尝试使用下一个无类型参数
+			// 注：无类型参数的名称和类型必须是匹配的
 			if (valueHolder == null && !autowiring) {
 				valueHolder = resolvedValues.getGenericArgumentValue(null, null, usedValueHolders);
 			}
@@ -787,6 +799,7 @@ class ConstructorResolver {
 		}
 
 		for (String autowiredBeanName : autowiredBeanNames) {
+			// 注册依赖关系
 			this.beanFactory.registerDependentBean(autowiredBeanName, beanName);
 			if (this.beanFactory.logger.isDebugEnabled()) {
 				this.beanFactory.logger.debug("Autowiring by type from bean name '" + beanName +

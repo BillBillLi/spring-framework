@@ -290,6 +290,9 @@ public class MethodInvoker {
 	 * @param args the arguments to match
 	 * @return the accumulated weight for all arguments
 	 */
+	// 这块这个是一种算法，如果类型根本不匹配，直接返回一个超级大的数字
+	// 如果和超类Object匹配上了，则+2，如果是和父类匹配上了，则会+1
+	// 如果完全匹配上了，result不会增加
 	public static int getTypeDifferenceWeight(Class<?>[] paramTypes, Object[] args) {
 		int result = 0;
 		for (int i = 0; i < paramTypes.length; i++) {

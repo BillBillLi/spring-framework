@@ -85,6 +85,7 @@ public class InjectionMetadata {
 				if (debug) {
 					logger.debug("Processing injected element of bean '" + beanName + "': " + element);
 				}
+				// 这里有可能是filed，也有可能是method
 				element.inject(target, beanName, pvs);
 			}
 		}
