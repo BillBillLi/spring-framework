@@ -71,7 +71,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 		}
 	}
 	
-	/** Cache of singleton objects created by FactoryBeans: FactoryBean name --> object */
+	// 下面方法调用的cache
 	private final Map<String, Object> factoryBeanObjectCache = new ConcurrentHashMap<String, Object>(16);
 	
 	protected Object getCachedObjectForFactoryBean(String beanName) {

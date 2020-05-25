@@ -69,13 +69,13 @@ class PostProcessorRegistrationDelegate {
 
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				// 如果BeanFactoryPostProcessor是BeanDefinitionRegistryPostProcessor，
-				// 则优先执行，并加入上面的集合
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryPostProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
+					// 执行BeanDefinitionRegistryPostProcessor，并加入registryPostProcessors集合
 					registryPostProcessor.postProcessBeanDefinitionRegistry(registry);
 					registryPostProcessors.add(registryPostProcessor);
-				// 否则只加入集合
+				// 否则只加入regularPostProcessors集合
 				} else {
 					regularPostProcessors.add(postProcessor);
 				}
@@ -83,7 +83,7 @@ class PostProcessorRegistrationDelegate {
 
 			
 			String[] postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
-			// 首先调用实现了PriorityOrdered的BeanDefinitionRegistryPostProcessors
+			// 首先调用实现了 PriorityOrdered 的 BeanDefinitionRegistryPostProcessors
 			List<BeanDefinitionRegistryPostProcessor> priorityOrderedPostProcessors = new ArrayList<BeanDefinitionRegistryPostProcessor>();
 			for (String ppName : postProcessorNames) {
 				if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
@@ -97,12 +97,14 @@ class PostProcessorRegistrationDelegate {
 			// 下，如果不排序，但是你的BeanDefinitionRegistryPostProcessor又需要这种执行顺序时候，在下面invoke的时候就会有问题
 			// 接下来的排序也是这个道理
 			OrderComparator.sort(priorityOrderedPostProcessors);
+			// 把实现了 PriorityOrdered 的放到之前的 registryPostProcessors 中
 			registryPostProcessors.addAll(priorityOrderedPostProcessors);
+			// 执行实现了 PriorityOrdered 的 BeanDefinitionRegistryPostProcessor
 			invokeBeanDefinitionRegistryPostProcessors(priorityOrderedPostProcessors, registry);
 
-			// 然后调用实现了Ordered的BeanDefinitionRegistryPostProcessors
-			// 为什么要重新拿这个数组呢？因为实现了PriorityOrdered的BeanDefinitionRegistryPostProcessor可以给你注册了实现
-			// Ordered和什么排序接口都没有的BeanDefinitionRegistryPostProcessor
+			// 然后调用实现了 Ordered 的 BeanDefinitionRegistryPostProcessors
+			// 为什么要重新拿这个数组呢？因为实现了 PriorityOrdered 的 BeanDefinitionRegistryPostProcessor 可以给你注册了实现
+			// Ordered 和什么排序接口都没有的 BeanDefinitionRegistryPostProcessor
 			postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			List<BeanDefinitionRegistryPostProcessor> orderedPostProcessors = new ArrayList<BeanDefinitionRegistryPostProcessor>();
 			for (String ppName : postProcessorNames) {
