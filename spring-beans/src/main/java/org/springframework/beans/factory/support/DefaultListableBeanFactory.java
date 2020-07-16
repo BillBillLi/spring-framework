@@ -65,7 +65,6 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import com.sun.org.apache.bcel.internal.generic.NEW;
 
 import jdk.nashorn.internal.parser.JSONParser;
 import jdk.nashorn.internal.runtime.JSONFunctions;

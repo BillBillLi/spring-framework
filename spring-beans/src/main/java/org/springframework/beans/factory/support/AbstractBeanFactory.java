@@ -74,9 +74,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
 
-import com.alibaba.fastjson.JSON;
-import com.sun.org.apache.bcel.internal.generic.NEW;
-
 /**
  * Abstract base class for {@link org.springframework.beans.factory.BeanFactory}
  * implementations, providing the full capabilities of the
@@ -283,9 +280,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			try {
 				// 7. 拿到这个beanName对应的BeanDefinition对应的RootBeanDefinition
 				final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
-				
-				// 将mbd打印成json （这是作者自己增加的代码）
-				System.out.println(JSON.toJSON(mbd).toString());
 				
 				// 8. 检查这个mbd是否合法
 				checkMergedBeanDefinition(mbd, beanName, args);
@@ -1315,7 +1309,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws CannotLoadBeanClassException {
 		try {
 			// 如果mbd已经有beanClass，则直接结束方法
-			// 返回值是类的全类名
+			// 返回值是类的全类名,这里一般都有的
 			if (mbd.hasBeanClass()) {
 				return mbd.getBeanClass();
 			}

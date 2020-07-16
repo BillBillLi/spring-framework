@@ -374,7 +374,9 @@ class ConstructorResolver {
 	public BeanWrapper instantiateUsingFactoryMethod(
 			final String beanName, final RootBeanDefinition mbd, final Object[] explicitArgs) {
 
+		// new 一个bw， bw也是方法的结果
 		BeanWrapperImpl bw = new BeanWrapperImpl();
+		// 对bw进行起码的初始化，这句可以先跳过，你只要知道是个起码的初始化即可
 		this.beanFactory.initBeanWrapper(bw);
 
 		Object factoryBean;
@@ -424,9 +426,10 @@ class ConstructorResolver {
 		// 这个else 代码块主要是在拿已经解析并使用过的方法和方法参数的缓存
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
+				// 注意哈，这里便体现出了RootBeanDefiniti缓存的作用了
 				// 拿解析过的构造方法或是工厂方法
 				factoryMethodToUse = (Method) mbd.resolvedConstructorOrFactoryMethod;
-				// 已解析过的不为空 && mbd构造方法参数也是有的
+				// 已解析过的不为空 && mbd构造方法参数也是有的。
 				if (factoryMethodToUse != null && mbd.constructorArgumentsResolved) {
 					// 设置argsToUse为mbd解析过的构造方法的参数的缓存
 					argsToUse = mbd.resolvedConstructorArguments;
@@ -828,6 +831,7 @@ class ConstructorResolver {
 		// 本方法的result
 		Object[] resolvedArgs = new Object[argsToResolve.length];
 		for (int argIndex = 0; argIndex < argsToResolve.length; argIndex++) {
+			// 这里在做的事情主要就是对值类型的一个转换
 			Object argValue = argsToResolve[argIndex];
 			MethodParameter methodParam = MethodParameter.forMethodOrConstructor(methodOrCtor, argIndex);
 			GenericTypeResolver.resolveParameterType(methodParam, methodOrCtor.getDeclaringClass());
